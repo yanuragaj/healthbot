@@ -1,0 +1,114 @@
+# tasks file for k8s-master
+
+  - name: "Installing docker"
+    package: 
+      name: docker
+      state: present
+
+  - name: "Starting docker services"
+    service:
+     name: docker
+     state: restarted
+
+  - name: Creating a repository file for Kubernetes
+    file:
+     path: /etc/yum.repos.d/kubernetes.repo
+     state: touch
+
+  - name: Adding repository details in Kubernetes repo file.
+    blockinfile:
+     path: /etc/yum.repos.d/kubernetes.repo
+     block: |
+      [kubernetes]
+      name=Kubernetes
+      baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-\$basearch
+      enabled=1
+      gpgcheck=1
+      repo_gpgcheck=1
+      gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+      exclude=kubelet kubeadm kubectl
+
+  - name: Installing required packages
+    yum:
+     name: "kubelet, kubeadm, kubectl " 
+     state: present
+     disable_excludes: kubernetes
+    
+  - name: Restart kubelet
+    service:
+      name: kubelet
+      daemon_reload: yes
+      state: restarted
+
+  - name: pulling all images
+    shell: kubeadm config images pull
+
+  - name: Creating folder for daemon.json
+    file:
+     path: /etc/docker/daemon.json
+     state: touch
+    
+  - name: copying content of the daemon.json file
+    copy:
+      dest: /etc/docker/daemon.json
+      src:  daemon.json
+
+  - name: installing iproute-tc
+    package:
+      name:
+      - iproute-tc
+      state: present
+
+  - name: enabling docker service
+    service:
+      name: "docker"  
+      state: started
+      enabled: yes
+
+  - name: enabling kubelet service
+    service:
+      name: "kubelet"
+      state: started
+      enabled: yes
+
+  - name: Remove swapfile from /etc/fstab
+    mount:
+      name: "{{ item }}"
+      fstype: swap
+      state: absent
+    with_items:
+      - swap
+      - none
+
+  - name: Disable swap
+    command: swapoff -a
+    when: ansible_swaptotal_mb > 0
+
+
+
+    #  - name: initializing  kubeadm service
+    #  shell: "kubeadm init --pod-network-cidr=10.244.0.0/16  --ignore-preflight-errors=NumCPU --ignore-preflight-errors=Mem"
+
+
+  - name: Creating the directory fo config file
+    file:
+      name: "$HOME/.kube"
+      state: directory
+
+  - name: copying conf file
+    command: "cp  /etc/kubernetes/admin.conf $HOME/.kube/config"
+
+  - name: changing ownership of config file
+    shell: "chown $(id -u):$(id -g) $HOME/.kube/config"
+
+
+  - name: Installing flannel
+    shell: "kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml"
+
+  - name: Generate join command
+    command: kubeadm token create --print-join-command
+    register: join_command
+
+  - name: Copy join command to local file
+    local_action: copy content="{{ join_command.stdout_lines[0] }}" dest="join-command"
+

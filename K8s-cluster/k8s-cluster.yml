@@ -1,0 +1,7 @@
+- hosts: master
+  roles:
+  - role: k8s-master
+
+- hosts: worker
+  roles:
+  - role: k8s-worker

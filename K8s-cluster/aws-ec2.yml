@@ -1,0 +1,83 @@
+- hosts: "localhost"
+  tasks:
+
+    - name: "Creating ec2"
+      ec2:
+          key_name: Linux
+          profile: default
+          instance_type: t2.micro
+          image: ami-011c99152163a87ae
+          count: 1
+          region: ap-south-1
+          wait: true
+          instance_tags: {"Name": "k8s-master"}
+      register: ec2Info
+           
+    - name: "Retrieving IP Add of new container"
+      debug:
+          var: ec2Info['instances'][0]['public_ip']
+
+    - name: "Updating IP Add of ec2 instance in Inventory of Ansible"
+      lineinfile:
+          dest: "/root/ip.txt"
+          line: |
+                  [master]
+                  {{ ec2Info['instances'][0]['public_ip']}} ansible_user=ec2-user ansible_ssh_private_key_file=/root/Linux.pem ansible_connection=ssh ansible_become=yes
+  
+
+- hosts: "localhost"
+  tasks:
+
+    - name: "Creating ec2"
+      ec2:
+          key_name: Linux
+          profile: default
+          instance_type: t2.micro
+          image: ami-011c99152163a87ae
+          count: 1
+          region: ap-south-1
+          wait: true
+          instance_tags: {"Name": "k8s-worker1"}
+      register: ec2Info
+           
+    - name: "Retrieving IP Add of new container"
+      debug:
+          var: ec2Info['instances'][0]['public_ip']
+
+    - name: "Updating IP Add of ec2 instance in Inventory of Ansible"
+      lineinfile:
+          dest: "/root/ip.txt"
+          line: |
+                  [worker]
+                  {{ ec2Info['instances'][0]['public_ip']}} ansible_user=ec2-user ansible_ssh_private_key_file=/root/Linux.pem ansible_connection=ssh ansible_become=yes
+  
+
+
+
+- hosts: "localhost"
+  tasks:
+
+    - name: "Creating ec2"
+      ec2:
+          key_name: Linux
+          profile: default
+          instance_type: t2.micro
+          image: ami-011c99152163a87ae
+          count: 1
+          region: ap-south-1
+          wait: true
+          instance_tags: {"Name": "k8s-worker2"}
+      register: ec2Info
+           
+    - name: "Retrieving IP Add of new container"
+      debug:
+          var: ec2Info['instances'][0]['public_ip']
+
+    - name: "Updating IP Add of ec2 instance in Inventory of Ansible"
+      lineinfile:
+          dest: "/root/ip.txt"
+          line: |
+                  [worker]
+                  {{ ec2Info['instances'][0]['public_ip']}} ansible_user=ec2-user ansible_ssh_private_key_file=/root/Linux.pem ansible_connection=ssh ansible_become=yes
+  
+

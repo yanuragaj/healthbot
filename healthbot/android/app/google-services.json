@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "598906028500",
+    "project_id": "health-bot-dc53a",
+    "storage_bucket": "health-bot-dc53a.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:598906028500:android:c081bd4b48a85193751641",
+        "android_client_info": {
+          "package_name": "com.healthbot.healthbot"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "598906028500-tvfj7n9rii1rjm8i8ps4k268q1ps9v8g.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB8mHiHnSQEUBTzZGAQrbZbC_vvvZKYYcE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "598906028500-tvfj7n9rii1rjm8i8ps4k268q1ps9v8g.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
