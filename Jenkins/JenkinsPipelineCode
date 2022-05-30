@@ -1,0 +1,98 @@
+pipeline {
+    
+    agent {
+        label "k8s-master"
+    }
+    
+    
+    stages {
+        
+        stage('Downloading repo from github') {
+            steps {
+                
+                git branch: 'main',
+                credentialsId: 'dc56b9b3-2ea3-4af7-af6a-7f3610830c2f',
+                url: 'https://github.com/yanuragaj/healthbot.git' 
+                sh 'ls'
+                
+            }
+            
+        }
+        
+        
+        stage('Deploying dietpred') {
+            steps {
+                sh 'pwd'
+                sh 'kubectl create -f /var/jenkins/workspace/k8s-cluster-job/Jenkins/healthBotDeploy.yml '
+                sh 'kubectl describe deploy/dietpred'
+                sh 'kubectl get pods'
+            }
+            
+        }
+        
+        stage('Creating Service for dietpred') {
+            steps {
+                sh 'pwd'
+                sh 'kubectl apply -f ./Jenkins/svc.yml'
+                sh 'kubectl describe svc/dietservice'
+                sh 'kubectl get svc'
+            }
+            
+        }
+        
+        stage('Testing Dietpred pod server via url') {
+            steps {
+                retry(10){
+                sh 'curl http://172.31.42.229:30000/cgi-bin/predct.py?x1=22&x2=0&x3=0&x4=0&x5=0'
+                }
+            }
+            
+        }
+        
+        stage('Deploying nlpmodel') {
+            steps {
+                sh 'pwd'
+                sh 'kubectl create -f ./Jenkins/nlpDeploy.yml'
+                sh 'kubectl describe deploy/nlpmodel'
+                sh 'kubectl get pods'
+            }
+            
+        }
+        
+        stage('Creating Service for nlpmodel') {
+            steps {
+                sh 'pwd'
+                sh 'kubectl apply -f ./Jenkins/nlpsvc.yml'
+                sh 'kubectl describe svc/nlpservice'
+                sh 'kubectl get svc'
+            }
+            
+        }
+        
+        stage('Testing nlpmodel pod server via url') {
+            steps {
+                retry(10){
+                sh 'curl http://172.31.42.229:30001/spacy?x=%22How%20ARe%20YOU%22'
+                }
+            }
+            
+        }
+    }
+        
+        post {
+         always {
+             echo "Post Job Execution Works!!!"
+         }
+         success {
+              echo "Successfully Done The Job!!! /n Now Checking Logs"
+              sh 'kubectl logs deploy/dietpred'
+              sh 'kubectl logs deploy/nlpmodel'
+         }
+         failure {
+             echo "FAILED!!!"
+             sh 'kubectl delete all --all'
+         }
+        }
+     
+    
+}
